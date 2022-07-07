@@ -83,8 +83,12 @@ public class QingpingBleManager extends BleManager {
                     Log.e(TAG, "onWriteDone2");
                 }).enqueue();
 
+        float tempOffset = 0f;
+        float humOffset = 0;
+        String offset = StringUtil.toHexString(tempOffset, humOffset);
+
         waitForNotification(myReadCharacteristic)
-                .trigger(writeCharacteristic(myWriteCharacteristic, new Data(StringUtil.hexStringToByteArray("053a00000000")), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE))
+                .trigger(writeCharacteristic(myWriteCharacteristic, new Data(StringUtil.hexStringToByteArray("053a" + offset) ), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE))
                 .with((device, data) -> {
                     Log.e(TAG, "offset: " + StringUtil.toHexString(data.getValue()));
                 }).done(device -> {
