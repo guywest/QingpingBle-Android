@@ -72,27 +72,21 @@ public class MainActivity extends AppCompatActivity {
             public void onBatchScanResults(@NonNull List<ScanResult> results) {
                 results.forEach(result -> {
                     if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-//                        Log.e(TAG, "onBatchScanResults: " );
-//                        return;
+                        return;
                     }
                     if (result.getDevice().getName() != null) {
                         ScanRecord scanRecord = result.getScanRecord();
-                        if (scanRecord == null) {
-//                            Log.e(TAG, "onBatchScanResults: scanRecord is null");
+                        if (scanRecord == null || scanRecord.getServiceData() == null) {
                             return;
                         }
-                        if (scanRecord.getServiceData() == null) {
-//                            Log.e(TAG, "onBatchScanResults: ServiceData is null");
-                            return;
-                        }
+
                         Set<ParcelUuid> uuidsSet = scanRecord.getServiceData().keySet();
                         if (!uuidsSet.contains(QP_UUID)) {
-//                            Log.e(TAG, "onBatchScanResults: 不是青萍的设备");
                             return;
                         }
                         String hexData = StringUtil.toHexString(result.getScanRecord().getServiceData(QP_UUID));
                         QPDevice device = StringUtil.parseServiceData(hexData);
-                        if(device == null) {
+                        if (device == null) {
                             return;
                         }
                         QingpingBleManager qingpingBleManager = new QingpingBleManager(getApplicationContext(), QPUUID.getUUIDByProductId(QPProductID.CGF1L));
@@ -102,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
                             qingpingBleManager.connect(result.getDevice()).retry(3).useAutoConnect(true).done(device1 -> {
                                 Log.e(TAG, "onBatchScanResults: connect success" + device1.getName());
                                 qingpingBleManager.verify();
+                                qingpingBleManager.writeCharacteristic("0012").
                             }).enqueue();
                         }
 

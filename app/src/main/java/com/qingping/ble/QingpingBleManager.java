@@ -14,7 +14,10 @@ import com.qingping.ble.tools.StringUtil;
 import java.util.Map;
 import java.util.UUID;
 
+import androidx.annotation.Nullable;
 import no.nordicsemi.android.ble.BleManager;
+import no.nordicsemi.android.ble.WaitForValueChangedRequest;
+import no.nordicsemi.android.ble.WriteRequest;
 import no.nordicsemi.android.ble.callback.DataReceivedCallback;
 import no.nordicsemi.android.ble.data.Data;
 
@@ -59,20 +62,23 @@ public class QingpingBleManager extends BleManager {
     }
 
 
-    public void startScan() {
+    public WaitForValueChangedRequest writeCharacteristic(final String hexString) {
+        return waitForNotification(myReadCharacteristic)
+                .trigger(writeCharacteristic(myWriteCharacteristic,
+                        new Data(StringUtil.hexStringToByteArray(hexString)), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE));
 
     }
 
 
-   synchronized public void verify() {
-         waitForNotification(baseReadCharacteristic)
+    synchronized public void verify() {
+        waitForNotification(baseReadCharacteristic)
                 .trigger(writeCharacteristic(baseWriteCharacteristic, new Data(StringUtil.hexStringToByteArray("11013e4de816d0fe9b67c622fbe0d4dc4709")), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE))
                 .with((device, data) -> {
                     Log.e(TAG, "verify: " + StringUtil.toHexString(data.getValue()));
 
                 }).done(device -> {
-                    Log.e(TAG, "onWriteDone");
-                }).enqueue();
+            Log.e(TAG, "onWriteDone");
+        }).enqueue();
 
         waitForNotification(baseReadCharacteristic)
                 .trigger(writeCharacteristic(baseWriteCharacteristic, new Data(StringUtil.hexStringToByteArray("11023e4de816d0fe9b67c622fbe0d4dc4709")), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE))
@@ -80,20 +86,20 @@ public class QingpingBleManager extends BleManager {
                     Log.e(TAG, "verify1102: " + StringUtil.toHexString(data.getValue()));
 
                 }).done(device -> {
-                    Log.e(TAG, "onWriteDone2");
-                }).enqueue();
+            Log.e(TAG, "onWriteDone2");
+        }).enqueue();
 
         float tempOffset = 0f;
         float humOffset = 0;
         String offset = StringUtil.toHexString(tempOffset, humOffset);
 
         waitForNotification(myReadCharacteristic)
-                .trigger(writeCharacteristic(myWriteCharacteristic, new Data(StringUtil.hexStringToByteArray("053a" + offset) ), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE))
+                .trigger(writeCharacteristic(myWriteCharacteristic, new Data(StringUtil.hexStringToByteArray("053a" + offset)), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE))
                 .with((device, data) -> {
                     Log.e(TAG, "offset: " + StringUtil.toHexString(data.getValue()));
                 }).done(device -> {
-                    Log.e(TAG, "onWriteDone3");
-                }).enqueue();
+            Log.e(TAG, "onWriteDone3");
+        }).enqueue();
 
     }
 
