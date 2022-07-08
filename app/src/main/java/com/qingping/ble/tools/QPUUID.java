@@ -1,5 +1,6 @@
 package com.qingping.ble.tools;
 
+import android.os.ParcelUuid;
 import android.util.ArrayMap;
 
 import java.util.Map;
@@ -9,6 +10,8 @@ import java.util.UUID;
  * 定义青萍的UUID
  */
 public class QPUUID {
+    public static final ParcelUuid QP_UUID = ParcelUuid.fromString("0000fdcd-0000-1000-8000-00805f9b34fb");
+
     // 青萍协议相关的 Characteristic 都放在下面的服务里
     private static final UUID QP_SERVICE = UUID.fromString("22210000-554a-4546-5542-46534450464d");
 

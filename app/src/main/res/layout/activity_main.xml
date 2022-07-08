@@ -8,48 +8,11 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/ble_start_scan"
+        android:id="@+id/ble_scan_and_connect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="开始扫描"
+        android:text="扫描和连接"
         android:textSize="25sp">
     </Button>
-
-    <Button
-        android:id="@+id/ble_stop_scan"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="停止扫描"
-        android:textSize="25sp"
-        />
-
-    <Button
-        android:id="@+id/ble_connect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="连接"
-        android:textSize="25sp"
-        />
-    <Button
-        android:id="@+id/ble_set_token"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="设置 Token"
-        android:textSize="25sp"
-        />
-    <Button
-        android:id="@+id/ble_verify_token"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="验证 Token"
-        android:textSize="25sp"
-        />
-    <Button
-        android:id="@+id/ble_set_wifi"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="连接 Wi-Fi"
-        android:textSize="25sp"
-        />
 
 </LinearLayout>

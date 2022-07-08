@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import androidx.annotation.Nullable;
+
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.WaitForValueChangedRequest;
 import no.nordicsemi.android.ble.WriteRequest;
@@ -27,10 +28,15 @@ public class QingpingBleManager extends BleManager {
     private BluetoothGattCharacteristic baseReadCharacteristic;
     private BluetoothGattCharacteristic myWriteCharacteristic;
     private BluetoothGattCharacteristic myReadCharacteristic;
-    private static final ParcelUuid QP_UUID = ParcelUuid.fromString("0000fdcd-0000-1000-8000-00805f9b34fb");
 
     private Map<String, UUID> uuidsMap;
 
+    /**
+     * BleManger 对应的构造
+     *
+     * @param context  上下文
+     * @param uuidsMap 设备对应的UUIDMap，需要从 QPUUID 的 getUUIDByProductId 方法中传入对应的产品类型获取，产品类型可查看产品背部的Model
+     */
     public QingpingBleManager(@NonNull Context context, @NonNull Map<String, UUID> uuidsMap) {
         super(context);
         this.uuidsMap = uuidsMap;
@@ -52,57 +58,28 @@ public class QingpingBleManager extends BleManager {
         Log.println(priority, TAG, message);
     }
 
-
-    public void connectAndVerify() {
-
+    /**
+     * 向设备写入数据，并等待设备回复，设置 token、验证token、同步时间、同步时区用次方法
+     * @param hexString
+     * @return
+     */
+    public WaitForValueChangedRequest writeBaseCharacteristic(final String hexString) {
+        return waitForNotification(baseReadCharacteristic)
+                .trigger(writeCharacteristic(baseWriteCharacteristic,
+                        new Data(StringUtil.hexStringToByteArray(hexString)), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE));
     }
 
-    public void connectAndBind() {
-
-    }
-
-
+    /**
+     * 向设备写入数据，并等待设备回复，除 设置 token、验证token、同步时间、同步时区 以外的其他操作用此方法
+     * @param hexString
+     * @return
+     */
     public WaitForValueChangedRequest writeCharacteristic(final String hexString) {
         return waitForNotification(myReadCharacteristic)
                 .trigger(writeCharacteristic(myWriteCharacteristic,
                         new Data(StringUtil.hexStringToByteArray(hexString)), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE));
 
     }
-
-
-    synchronized public void verify() {
-        waitForNotification(baseReadCharacteristic)
-                .trigger(writeCharacteristic(baseWriteCharacteristic, new Data(StringUtil.hexStringToByteArray("11013e4de816d0fe9b67c622fbe0d4dc4709")), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE))
-                .with((device, data) -> {
-                    Log.e(TAG, "verify: " + StringUtil.toHexString(data.getValue()));
-
-                }).done(device -> {
-            Log.e(TAG, "onWriteDone");
-        }).enqueue();
-
-        waitForNotification(baseReadCharacteristic)
-                .trigger(writeCharacteristic(baseWriteCharacteristic, new Data(StringUtil.hexStringToByteArray("11023e4de816d0fe9b67c622fbe0d4dc4709")), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE))
-                .with((device, data) -> {
-                    Log.e(TAG, "verify1102: " + StringUtil.toHexString(data.getValue()));
-
-                }).done(device -> {
-            Log.e(TAG, "onWriteDone2");
-        }).enqueue();
-
-        float tempOffset = 0f;
-        float humOffset = 0;
-        String offset = StringUtil.toHexString(tempOffset, humOffset);
-
-        waitForNotification(myReadCharacteristic)
-                .trigger(writeCharacteristic(myWriteCharacteristic, new Data(StringUtil.hexStringToByteArray("053a" + offset)), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE))
-                .with((device, data) -> {
-                    Log.e(TAG, "offset: " + StringUtil.toHexString(data.getValue()));
-                }).done(device -> {
-            Log.e(TAG, "onWriteDone3");
-        }).enqueue();
-
-    }
-
 
     private class QingpingGattCallBackImpl extends BleManagerGattCallback {
 
