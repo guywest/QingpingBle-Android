@@ -113,10 +113,12 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
+            //过滤广播，产品id + bind状态，如果是日常连接的话，后面的bind状态条件可以去掉
             if (device.getProductId().equalsIgnoreCase(QPProductID.CGF1L) && device.isBind()) {
                 Log.e(TAG, "onBatchScanResults-hexData: " + hexData + ", productId:" + device.toString());
                 //停止扫描
                 stopScan();
+
                 connectAndSettingTempOffset(result.getDevice());
             }
 
@@ -154,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
             float tempOffset = 0f;
             float humOffset = 0;
             String offset = StringUtil.toHexString(tempOffset, humOffset);
+            //命令格式：0503 + 温湿度 offset，05 命令03 + offset 的长度，03表示设置offset命令
             qpBleManager.writeCharacteristic("053a" + offset)
                     .with((device1, data) -> {
                         Log.e(TAG, "设置温湿度 offset 结果: " + StringUtil.toHexString(data.getValue()));
