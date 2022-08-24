@@ -7,7 +7,7 @@ public class StringUtil {
      * @param bytes
      * @return
      */
-    public static String toHexString(byte[] bytes) {
+    public static String tempAndHumiToHexString(byte[] bytes) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -75,7 +75,7 @@ public class StringUtil {
      * @return
      */
 
-    public static String toHexString(final float temperature, final float humidity) {
+    public static String tempAndHumiToHexString(final float temperature, final float humidity) {
         Integer temp = Math.round(temperature * 10);
         Integer hum = Math.round(humidity * 10);
         return formatAndReverseHexString(Integer.toHexString(temp)) + formatAndReverseHexString(Integer.toHexString(hum));

@@ -4,7 +4,6 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
-import android.os.ParcelUuid;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -14,11 +13,8 @@ import com.qingping.ble.tools.StringUtil;
 import java.util.Map;
 import java.util.UUID;
 
-import androidx.annotation.Nullable;
-
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.WaitForValueChangedRequest;
-import no.nordicsemi.android.ble.WriteRequest;
 import no.nordicsemi.android.ble.callback.DataReceivedCallback;
 import no.nordicsemi.android.ble.data.Data;
 
@@ -124,7 +120,7 @@ public class QingpingBleManager extends BleManager {
     }
 
     private final DataReceivedCallback dataReceivedCallback =
-            (device, data) -> Log.e(TAG, "onDataReceived: " + StringUtil.toHexString(data.getValue()));
+            (device, data) -> Log.e(TAG, "onDataReceived: " + StringUtil.tempAndHumiToHexString(data.getValue()));
 
 
 }

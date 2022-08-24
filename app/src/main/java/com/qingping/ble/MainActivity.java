@@ -3,7 +3,6 @@ package com.qingping.ble;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.util.Log;
@@ -107,19 +106,20 @@ public class MainActivity extends AppCompatActivity {
             if (!uuidsSet.contains(QPUUID.QP_UUID)) {
                 return;
             }
-            String hexData = StringUtil.toHexString(result.getScanRecord().getServiceData(QPUUID.QP_UUID));
+            String hexData = StringUtil.tempAndHumiToHexString(result.getScanRecord().getServiceData(QPUUID.QP_UUID));
             QPDevice device = StringUtil.parseServiceData(hexData);
             if (device == null) {
                 return;
             }
 
             //过滤广播，产品id + bind状态，如果是日常连接的话，后面的bind状态条件可以去掉
-            if (device.getProductId().equalsIgnoreCase(QPProductID.CGF1L) && device.isBind()) {
-                Log.e(TAG, "onBatchScanResults-hexData: " + hexData + ", productId:" + device.toString());
+            // 注意： 这里的 CGDN1 很重要，如果连接哪个产品就设置哪个产品id作为过滤
+            if (device.getProductId().equalsIgnoreCase(QPProductID.CGDN1) && device.isBind()) {
+                Log.e(TAG, "onBatchScanResults-hexData: " + hexData + ", productId:" + device);
                 //停止扫描
                 stopScan();
 
-                connectAndSettingTempOffset(result.getDevice());
+                connectAndSetting(result.getDevice());
             }
 
         }
@@ -127,12 +127,12 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * 连接、设置token、验证token、设置温度湿度offset
+     * 连接、设置token、验证token、配网
      * @param device
      */
-    private void connectAndSettingTempOffset(BluetoothDevice device) {
+    private void connectAndSetting(BluetoothDevice device) {
         //这里传入了CGF1L（青萍商用温湿度计 E LoRa 版），开发时可以根据需要自定义
-        QingpingBleManager qpBleManager = new QingpingBleManager(getApplicationContext(), QPUUID.getUUIDByProductId(QPProductID.CGF1L));
+        QingpingBleManager qpBleManager = new QingpingBleManager(getApplicationContext(), QPUUID.getUUIDByProductId(QPProductID.CGDN1));
 
         qpBleManager.connect(device).retry(3).useAutoConnect(true).done(connectedDevice -> {
             Log.e(TAG, "onBatchScanResults: connect success");
@@ -140,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
             // 再进行设置 token 了，也就是说下次连接的时候可以省略下面这一步
             qpBleManager.writeBaseCharacteristic("11013e4de816d0fe9b67c622fbe0d4dc4709")
                     .with((device1, data) -> {
-                        Log.e(TAG, "设置 Token 结果: " + StringUtil.toHexString(data.getValue()));
+                        Log.e(TAG, "设置 Token 结果: " + StringUtil.tempAndHumiToHexString(data.getValue()));
                     }).done(device1 -> {
                         Log.e(TAG, "connectAndSettingTempOffset: 设置token完成");
                     }).enqueue();
@@ -148,18 +148,18 @@ public class MainActivity extends AppCompatActivity {
             //验证token，命令格式为：1102 + 上一步设置的token
             qpBleManager.writeBaseCharacteristic("11023e4de816d0fe9b67c622fbe0d4dc4709")
                     .with((device1, data) -> {
-                        Log.e(TAG, "验证 Token 结果: " + StringUtil.toHexString(data.getValue()));
+                        Log.e(TAG, "验证 Token 结果: " + StringUtil.tempAndHumiToHexString(data.getValue()));
                     }).done(device1 -> {
                         Log.e(TAG, "connectAndSettingTempOffset: 验证token完成");
                     }).enqueue();
 
             float tempOffset = 0f;
             float humOffset = 0;
-            String offset = StringUtil.toHexString(tempOffset, humOffset);
+            String offset = StringUtil.tempAndHumiToHexString(tempOffset, humOffset);
             //命令格式：0503 + 温湿度 offset，05 命令03 + offset 的长度，03表示设置offset命令
             qpBleManager.writeCharacteristic("053a" + offset)
                     .with((device1, data) -> {
-                        Log.e(TAG, "设置温湿度 offset 结果: " + StringUtil.toHexString(data.getValue()));
+                        Log.e(TAG, "设置温湿度 offset 结果: " + StringUtil.tempAndHumiToHexString(data.getValue()));
                     }).enqueue();
         }).enqueue();
     }
