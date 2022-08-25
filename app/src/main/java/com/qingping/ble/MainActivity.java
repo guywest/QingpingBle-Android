@@ -3,11 +3,13 @@ package com.qingping.ble;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import no.nordicsemi.android.ble.data.Data;
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat;
 import no.nordicsemi.android.support.v18.scanner.ScanCallback;
 import no.nordicsemi.android.support.v18.scanner.ScanFilter;
@@ -30,18 +33,20 @@ import no.nordicsemi.android.support.v18.scanner.ScanSettings;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
+    @RequiresApi(api = Build.VERSION_CODES.S)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         //授权权限
-        ActivityCompat.requestPermissions(this, new String[]{
-                Manifest.permission.ACCESS_COARSE_LOCATION,
+        ActivityCompat.requestPermissions(MainActivity.this, new String[]{
                 Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                Manifest.permission.WAKE_LOCK}, 1);
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT,}, 1);
+
 
         findViewById(R.id.ble_scan_and_connect).setOnClickListener(view -> {
             this.bleScanConnect();
@@ -54,9 +59,9 @@ public class MainActivity extends AppCompatActivity {
         //扫描
         BluetoothLeScannerCompat scanner = BluetoothLeScannerCompat.getScanner();
         ScanSettings settings = new ScanSettings.Builder()
-                .setLegacy(false)
+                .setLegacy(true)
                 .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
-                .setReportDelay(2000)
+                .setReportDelay(100)
                 .setUseHardwareBatchingIfSupported(true)
                 .build();
         List<ScanFilter> filters = new ArrayList<>();
@@ -66,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         //开始扫描
         try {
             scanner.startScan(filters, settings, scanCallback);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -96,38 +101,38 @@ public class MainActivity extends AppCompatActivity {
      */
     @SuppressLint("MissingPermission")
     private void parseScanResult(ScanResult result) {
-        if (result.getDevice().getName() != null) {
-            ScanRecord scanRecord = result.getScanRecord();
-            if (scanRecord == null || scanRecord.getServiceData() == null) {
-                return;
-            }
-
-            Set<ParcelUuid> uuidsSet = scanRecord.getServiceData().keySet();
-            if (!uuidsSet.contains(QPUUID.QP_UUID)) {
-                return;
-            }
-            String hexData = StringUtil.tempAndHumiToHexString(result.getScanRecord().getServiceData(QPUUID.QP_UUID));
-            QPDevice device = StringUtil.parseServiceData(hexData);
-            if (device == null) {
-                return;
-            }
-
-            //过滤广播，产品id + bind状态，如果是日常连接的话，后面的bind状态条件可以去掉
-            // 注意： 这里的 CGDN1 很重要，如果连接哪个产品就设置哪个产品id作为过滤
-            if (device.getProductId().equalsIgnoreCase(QPProductID.CGDN1) && device.isBind()) {
-                Log.e(TAG, "onBatchScanResults-hexData: " + hexData + ", productId:" + device);
-                //停止扫描
-                stopScan();
-
-                connectAndSetting(result.getDevice());
-            }
-
+        ScanRecord scanRecord = result.getScanRecord();
+        if (scanRecord == null || scanRecord.getServiceData() == null) {
+            return;
         }
+
+        Set<ParcelUuid> uuidsSet = scanRecord.getServiceData().keySet();
+        if (!uuidsSet.contains(QPUUID.QP_UUID)) {
+            return;
+        }
+        String hexData = StringUtil.toHexString(result.getScanRecord().getServiceData(QPUUID.QP_UUID));
+        QPDevice device = StringUtil.parseServiceData(hexData);
+
+        if (device == null) {
+            return;
+        }
+
+        //过滤广播，产品id + bind状态，如果是日常连接的话，后面的bind状态条件可以去掉
+        // 注意： 这里的 CGDN1 很重要，如果连接哪个产品就设置哪个产品id作为过滤
+        if (device.getProductId().equalsIgnoreCase(QPProductID.CGDN1) && device.isBind()) {
+            Log.e(TAG, "onBatchScanResults-hexData: " + hexData + ", productId:" + device);
+            //停止扫描
+            stopScan();
+
+            connectAndSetting(result.getDevice());
+        }
+
     }
 
 
     /**
      * 连接、设置token、验证token、配网
+     *
      * @param device
      */
     private void connectAndSetting(BluetoothDevice device) {
@@ -140,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
             // 再进行设置 token 了，也就是说下次连接的时候可以省略下面这一步
             qpBleManager.writeBaseCharacteristic("11013e4de816d0fe9b67c622fbe0d4dc4709")
                     .with((device1, data) -> {
-                        Log.e(TAG, "设置 Token 结果: " + StringUtil.tempAndHumiToHexString(data.getValue()));
+                        Log.e(TAG, "设置 Token 结果: " + StringUtil.toHexString(data.getValue()));
                     }).done(device1 -> {
                         Log.e(TAG, "connectAndSettingTempOffset: 设置token完成");
                     }).enqueue();
@@ -148,19 +153,21 @@ public class MainActivity extends AppCompatActivity {
             //验证token，命令格式为：1102 + 上一步设置的token
             qpBleManager.writeBaseCharacteristic("11023e4de816d0fe9b67c622fbe0d4dc4709")
                     .with((device1, data) -> {
-                        Log.e(TAG, "验证 Token 结果: " + StringUtil.tempAndHumiToHexString(data.getValue()));
+                        Log.e(TAG, "验证 Token 结果: " + StringUtil.toHexString(data.getValue()));
                     }).done(device1 -> {
                         Log.e(TAG, "connectAndSettingTempOffset: 验证token完成");
                     }).enqueue();
 
-            float tempOffset = 0f;
-            float humOffset = 0;
-            String offset = StringUtil.tempAndHumiToHexString(tempOffset, humOffset);
-            //命令格式：0503 + 温湿度 offset，05 命令03 + offset 的长度，03表示设置offset命令
-            qpBleManager.writeCharacteristic("053a" + offset)
+            String wifiInfo = "\"Qingping AP\",\"QingpingNetwork0301!\"";
+            String hexWifiInfo = StringUtil.toHexString(wifiInfo.getBytes());
+            //连接WiFi的命令是 0x01，发送到BLE的数据长度为 hexWifiInfo 的长度 + 1
+            String hexLength = String.format("%02x", hexWifiInfo.length() / 2 + 1);
+
+            qpBleManager.writeCharacteristicSplit(hexLength + "01" + hexWifiInfo)
                     .with((device1, data) -> {
-                        Log.e(TAG, "设置温湿度 offset 结果: " + StringUtil.tempAndHumiToHexString(data.getValue()));
+                        Log.e(TAG, "设置WiFi 结果" + data);
                     }).enqueue();
+
         }).enqueue();
     }
 

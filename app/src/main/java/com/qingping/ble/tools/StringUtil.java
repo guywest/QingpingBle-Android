@@ -7,7 +7,7 @@ public class StringUtil {
      * @param bytes
      * @return
      */
-    public static String tempAndHumiToHexString(byte[] bytes) {
+    public static String toHexString(byte[] bytes) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -19,10 +19,10 @@ public class StringUtil {
                 if (hexString.length() == 1)
                     sb.append('0');
 
-                sb.append(hexString);//.append(' ');
+                sb.append(hexString);
             }
 
-        return sb.toString();//.toUpperCase();
+        return sb.toString();
     }
 
     /**

@@ -77,6 +77,20 @@ public class QingpingBleManager extends BleManager {
 
     }
 
+    /**
+     * 拆包向设备写入数据
+     * @param hexString
+     * @return
+     */
+    public WaitForValueChangedRequest writeCharacteristicSplit(final String hexString) {
+        return waitForNotification(myReadCharacteristic)
+                .trigger(writeCharacteristic(myWriteCharacteristic,
+                        new Data(StringUtil.hexStringToByteArray(hexString)), BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE).split());
+
+    }
+
+
+
     private class QingpingGattCallBackImpl extends BleManagerGattCallback {
 
         @Override
@@ -109,7 +123,7 @@ public class QingpingBleManager extends BleManager {
         @Override
         protected void initialize() {
             beginAtomicRequestQueue()
-                    .add(requestMtu(247))
+                    .add(requestMtu(23))
                     .add(enableNotifications(baseReadCharacteristic))
                     .add(enableNotifications(myReadCharacteristic))
                     .done(device -> Log.e(TAG, "initialize: target initialized"))
@@ -120,7 +134,7 @@ public class QingpingBleManager extends BleManager {
     }
 
     private final DataReceivedCallback dataReceivedCallback =
-            (device, data) -> Log.e(TAG, "onDataReceived: " + StringUtil.tempAndHumiToHexString(data.getValue()));
+            (device, data) -> Log.e(TAG, "onDataReceived: " + StringUtil.toHexString(data.getValue()));
 
 
 }
