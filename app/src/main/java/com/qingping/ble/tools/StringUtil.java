@@ -76,8 +76,8 @@ public class StringUtil {
      */
 
     public static String tempAndHumiToHexString(final float temperature, final float humidity) {
-        Integer temp = Math.round(temperature * 10);
-        Integer hum = Math.round(humidity * 10);
+        int temp = Math.round(temperature * 10);
+        int hum = Math.round(humidity * 10);
         return formatAndReverseHexString(Integer.toHexString(temp)) + formatAndReverseHexString(Integer.toHexString(hum));
     }
 

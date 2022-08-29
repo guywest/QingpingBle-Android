@@ -118,26 +118,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //过滤广播，产品id + bind状态，如果是日常连接的话，后面的bind状态条件可以去掉
-        // 注意： 这里的 CGDN1 很重要，如果连接哪个产品就设置哪个产品id作为过滤
-        if (device.getProductId().equalsIgnoreCase(QPProductID.CGDN1) && device.isBind()) {
+        // 注意： 这里的 CGF1L 很重要，如果连接哪个产品就设置哪个产品id作为过滤
+        if (device.getProductId().equalsIgnoreCase(QPProductID.CGF1L) && device.isBind()) {
             Log.e(TAG, "onBatchScanResults-hexData: " + hexData + ", productId:" + device);
             //停止扫描
             stopScan();
 
-            connectAndSetting(result.getDevice());
+            connectAndSettingTempOffset(result.getDevice());
         }
 
     }
 
 
     /**
-     * 连接、设置token、验证token、配网
+     * 连接、设置token、验证token、设置温度湿度offset
      *
      * @param device
      */
-    private void connectAndSetting(BluetoothDevice device) {
+    private void connectAndSettingTempOffset(BluetoothDevice device) {
         //这里传入了CGF1L（青萍商用温湿度计 E LoRa 版），开发时可以根据需要自定义
-        QingpingBleManager qpBleManager = new QingpingBleManager(getApplicationContext(), QPUUID.getUUIDByProductId(QPProductID.CGDN1));
+        QingpingBleManager qpBleManager = new QingpingBleManager(getApplicationContext(), QPUUID.getUUIDByProductId(QPProductID.CGF1L));
 
         qpBleManager.connect(device).retry(3).useAutoConnect(true).done(connectedDevice -> {
             Log.e(TAG, "onBatchScanResults: connect success");
@@ -158,16 +158,14 @@ public class MainActivity extends AppCompatActivity {
                         Log.e(TAG, "connectAndSettingTempOffset: 验证token完成");
                     }).enqueue();
 
-            String wifiInfo = "\"Qingping AP\",\"QingpingNetwork0301!\"";
-            String hexWifiInfo = StringUtil.toHexString(wifiInfo.getBytes());
-            //连接WiFi的命令是 0x01，发送到BLE的数据长度为 hexWifiInfo 的长度 + 1
-            String hexLength = String.format("%02x", hexWifiInfo.length() / 2 + 1);
-
-            qpBleManager.writeCharacteristicSplit(hexLength + "01" + hexWifiInfo)
+            float tempOffset = 0f;
+            float humOffset = 0;
+            String offset = StringUtil.tempAndHumiToHexString(tempOffset, humOffset);
+            //命令格式：0503 + 温湿度 offset，05 命令03 + offset 的长度，03表示设置offset命令
+            qpBleManager.writeCharacteristic("053a" + offset)
                     .with((device1, data) -> {
-                        Log.e(TAG, "设置WiFi 结果" + data);
+                        Log.e(TAG, "设置温湿度 offset 结果: " + StringUtil.toHexString(data.getValue()));
                     }).enqueue();
-
         }).enqueue();
     }
 
