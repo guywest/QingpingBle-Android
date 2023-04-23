@@ -1,6 +1,15 @@
 package com.qingping.ble.tools;
 
 public class StringUtil {
+    public static String hexToAscii(String hexString) {
+        StringBuilder output = new StringBuilder("");
+        for (int i = 0; i < hexString.length(); i += 2) {
+            String str = hexString.substring(i, i + 2);
+            output.append((char) Integer.parseInt(str, 16));
+        }
+        return output.toString();
+    }
+
     /**
      * 字节数组转换为hexString
      *
@@ -98,4 +107,6 @@ public class StringUtil {
         result += newTarget.substring(len - 4, len - 2);
         return result;
     }
+
+
 }

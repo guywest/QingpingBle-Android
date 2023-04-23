@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
         //过滤广播，产品id + bind状态，如果是日常连接的话，后面的bind状态条件可以去掉
         // 注意： 这里的 CGF1L 很重要，如果连接哪个产品就设置哪个产品id作为过滤
-        if (device.getProductId().equalsIgnoreCase(QPProductID.CGF1L) && device.isBind()) {
+        if (device.getProductId().equalsIgnoreCase(QPProductID.CGP1L) && device.isBind()) {
             Log.e(TAG, "onBatchScanResults-hexData: " + hexData + ", productId:" + device);
             //停止扫描
             stopScan();
@@ -157,15 +157,33 @@ public class MainActivity extends AppCompatActivity {
                     }).done(device1 -> {
                         Log.e(TAG, "connectAndSettingTempOffset: 验证token完成");
                     }).enqueue();
+            // 读取 DEVEUI
+            /**
+             qpBleManager.writeCharacteristic("0113")
+             .with((device1, data) -> {
+             String receiveData = StringUtil.toHexString(data.getValue());
+             String devEUI = StringUtil.hexToAscii(receiveData.substring(4));
+             Log.e(TAG, "DEVEUI: " + devEUI);
+             }).done(device1 -> {
+             Log.e(TAG, "connectAndSettingTempOffset: 读取 DEVEUI 完成" );
+             }).enqueue();
 
-            float tempOffset = 0f;
-            float humOffset = 0;
-            String offset = StringUtil.tempAndHumiToHexString(tempOffset, humOffset);
-            //命令格式：0503 + 温湿度 offset，05 命令03 + offset 的长度，03表示设置offset命令
-            qpBleManager.writeCharacteristic("053a" + offset)
-                    .with((device1, data) -> {
-                        Log.e(TAG, "设置温湿度 offset 结果: " + StringUtil.toHexString(data.getValue()));
-                    }).enqueue();
+             */
+
+
+            // 设置温度补偿
+            /**
+             *   float tempOffset = 0f;
+             *             float humOffset = 0;
+             *             String offset = StringUtil.tempAndHumiToHexString(tempOffset, humOffset);
+             *             //命令格式：0503 + 温湿度 offset，05 命令03 + offset 的长度，03表示设置offset命令
+             *             qpBleManager.writeCharacteristic("053a" + offset)
+             *                     .with((device1, data) -> {
+             *                         Log.e(TAG, "设置温湿度 offset 结果: " + StringUtil.toHexString(data.getValue()));
+             *                     }).enqueue();
+             */
+
+
         }).enqueue();
     }
 
