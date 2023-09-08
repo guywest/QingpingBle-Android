@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">QingpingBle</string>
+    <string name="scan_and_connect">扫描和连接</string>
+</resources>
