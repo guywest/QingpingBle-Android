@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">QingpingBle</string>
+    <string name="scan_and_connect">Scan and Connect</string>
 </resources>

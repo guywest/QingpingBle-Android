@@ -11,7 +11,7 @@
         android:id="@+id/ble_scan_and_connect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="扫描和连接"
+        android:text="@string/scan_and_connect"
         android:textSize="25sp">
     </Button>
 
